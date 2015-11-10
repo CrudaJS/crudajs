@@ -1,0 +1,21 @@
+{
+  "name": "crudajs",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "router.js": "^0.6.2",
+    "requirejs-ractive": "~0.1.5",
+    "requirejs": "~2.1.14",
+    "ractive": "~0.5.5",
+    "coffee-script": "coffeescript#~1.10.0"
+  },
+  "overrides": {
+    "router.js": {
+      "main": "router.js"
+    }
+  },
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "mocha": "^1.21.4"
+  }
+}
