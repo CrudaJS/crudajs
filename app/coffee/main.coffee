@@ -5,6 +5,7 @@ require.config
     ractive: '../../bower_components/ractive/ractive'
     rvc: '../../bower_components/rvc/dist/rvc'
     router: '../../bower_components/router.js/dist'
+    conf: './config'
 
 require [
   'app'
