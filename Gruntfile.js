@@ -1,40 +1,34 @@
 'use strict';
 
-// # Globbing
-// for performance reasons we're only matching one level down:
-// 'test/spec/{,*/}*.js'
-// If you want to recursively match all subfolders, use:
-// 'test/spec/**/*.js'
+module.exports = function(grunt) {
 
-module.exports = function (grunt) {
-
-  // Time how long tasks take. Can help when optimizing build times
   require('time-grunt')(grunt);
 
-  // Load grunt tasks automatically
   require('load-grunt-tasks')(grunt);
 
-  // Configurable paths
   var config = {
     app: 'app',
     dist: 'dist'
   };
 
-  // Define the configuration for all the tasks
   grunt.initConfig({
-
-    // Project settings
     config: config,
 
-    // Watches files for changes and runs tasks based on the changed files
     watch: {
       bower: {
         files: ['bower.json'],
         tasks: ['wiredep']
       },
+      coffee: {
+        files: ['<%= config.app %>/coffee/{,*/}*.coffee'],
+        tasks: ['coffee'],
+        options: {
+          livereload: true
+        }
+      },
       js: {
         files: ['<%= config.app %>/scripts/{,*/}*.js'],
-        tasks: ['jshint'],
+        tasks: ['jshint', 'requirejs'],
         options: {
           livereload: true
         }
@@ -58,7 +52,6 @@ module.exports = function (grunt) {
       }
     },
 
-    // The actual grunt server settings
     connect: {
       options: {
         port: 9000,
@@ -67,31 +60,6 @@ module.exports = function (grunt) {
         // Change this to '0.0.0.0' to access the server from outside
         hostname: 'localhost'
       },
-      // livereload: {
-      //   options: {
-      //     middleware: function (connect) {
-      //       return [
-      //         connect.static('.tmp'),
-      //         connect().use('/bower_components', connect.static('./bower_components')),
-      //         connect.static(config.app)
-      //       ];
-      //     }
-      //   }
-      // },
-      // test: {
-      //   options: {
-      //     open: false,
-      //     port: 9001,
-      //     middleware: function (connect) {
-      //       return [
-      //         connect.static('.tmp'),
-      //         connect.static('test'),
-      //         connect().use('/bower_components', connect.static('./bower_components')),
-      //         connect.static(config.app)
-      //       ];
-      //     }
-      //   }
-      // },
       dist: {
         options: {
           base: '<%= config.dist %>',
@@ -100,7 +68,18 @@ module.exports = function (grunt) {
       }
     },
 
-    // Empties folders to start fresh
+    jshint: {
+      options: {
+        jshintrc: '.jshintrc',
+        reporter: require('jshint-stylish')
+      },
+      all: [
+        'Gruntfile.js',
+        '<%= config.app %>/scripts/{,*/}*.js',
+        'test/{,*/}*.js'
+      ]
+    },
+
     clean: {
       dist: {
         files: [{
@@ -108,7 +87,8 @@ module.exports = function (grunt) {
           src: [
             '.tmp',
             '<%= config.dist %>/*',
-            '!<%= config.dist %>/.git*'
+            '!<%= config.dist %>/.git*',
+            '<%= config.app %>/scripts/*'
           ]
         }]
       },
@@ -122,20 +102,55 @@ module.exports = function (grunt) {
       server: '.tmp'
     },
 
-    // Make sure code styles are up to par and there are no obvious mistakes
-    jshint: {
-      options: {
-        jshintrc: '.jshintrc',
-        reporter: require('jshint-stylish')
-      },
-      all: [
-        'Gruntfile.js',
-        '<%= config.app %>/scripts/{,*/}*.js',
-        'test/{,*/}*.js'
-      ]
+    bower: {
+      dev: {
+        dest: '<%= config.dist %>/bower_components',
+        options: {
+          expand: true
+        }
+      }
     },
 
-    // Automatically inject Bower components into the HTML file
+    copy: {
+      dist: {
+        files: [{
+          expand: true,
+          dot: true,
+          cwd: '<%= config.app %>',
+          dest: '<%= config.dist %>',
+          src: [
+            '*.{ico,png,txt}',
+            '.htaccess',
+            'images/{,*/}*.webp',
+            '{,*/}*.html',
+            'styles/fonts/{,*/}*.*',
+            '../bower_components/{,*/}*.*'
+          ]
+        }]
+      },
+      styles: {
+        files: [{
+          expand: true,
+          dot: true,
+          cwd: '<%= config.app %>/styles',
+          dest: '<%= config.dist %>/styles',
+          src: '{,*/}*.css'
+        }]
+      },
+      compiled: {
+        files: [{
+          expand: true,
+          dot: true,
+          cwd: '<%= config.app %>/scripts',
+          dest: '<%= config.dist %>/scripts',
+          src: '{,*/}*.js',
+          filter: function (file) {
+            return !file.endsWith('main.js');
+          }
+        }]
+      }
+    },
+
     wiredep: {
       app: {
         ignorePath: /^\/|\.\.\//,
@@ -144,7 +159,6 @@ module.exports = function (grunt) {
       }
     },
 
-    // Build the application using Require.js
     requirejs: {
       compile: {
         options: {
@@ -164,85 +178,28 @@ module.exports = function (grunt) {
       }
     },
 
-    // The following *-min tasks produce minified files in the dist folder
-    imagemin: {
-      dist: {
-        files: [{
-          expand: true,
-          cwd: '<%= config.app %>/images',
-          src: '{,*/}*.{gif,jpeg,jpg,png}',
-          dest: '<%= config.dist %>/images'
-        }]
-      }
-    },
-
-    htmlmin: {
-      dist: {
-        options: {
-          collapseBooleanAttributes: true,
-          collapseWhitespace: true,
-          removeAttributeQuotes: true,
-          removeCommentsFromCDATA: true,
-          // removeEmptyAttributes: true,
-          removeOptionalTags: true,
-          removeRedundantAttributes: true,
-          useShortDoctype: true
-        },
-        files: [{
-          expand: true,
-          cwd: '<%= config.dist %>',
-          src: '{,*/}*.html',
-          dest: '<%= config.dist %>'
-        }]
-      }
-    },
-
-    // By default, your `index.html`'s <!-- Usemin block --> will take care
-    // of minification. These next options are pre-configured if you do not
-    // wish to use the Usemin blocks.
-    // cssmin: {
-    //   dist: {
-    //     files: {
-    //       '<%= config.dist %>/styles/main.css': [
-    //         '.tmp/styles/{,*/}*.css',
-    //         '<%= config.app %>/styles/{,*/}*.css'
-    //       ]
-    //     }
-    //   }
-
-
-    // Copies remaining files to places other tasks can use
-    copy: {
-      dist: {
-        files: [{
-          expand: true,
-          dot: true,
-          cwd: '<%= config.app %>',
-          dest: '<%= config.dist %>',
-          src: [
-            '*.{ico,png,txt}',
-            '.htaccess',
-            'images/{,*/}*.webp',
-            '{,*/}*.html',
-            'styles/fonts/{,*/}*.*',
-            '../components/{,*/}*.*'
-          ]
-        }]
-      },
-      styles: {
+    coffee: {
+      compile: {
         expand: true,
-        dot: true,
-        cwd: '<%= config.app %>/styles',
-        dest: '.tmp/styles/',
-        src: '{,*/}*.css'
+        cwd: '<%= config.app %>/coffee',
+        src: ['{,*/}*.coffee'],
+        dest: '<%= config.app %>/scripts',
+        ext: '.js'
+        //options: {
+        //  bare: true
+        //}
       }
     }
 
   });
 
+  /**
+      Register task
+  */
 
-  grunt.registerTask('serve', 'start the server and preview your app, ' +
-    '--allow-remote for remote access', function (target) {
+  grunt.registerTask('serve',
+      'start the server and preview your app, --allow-remote for remote access',
+      function (target) {
     if (grunt.option('allow-remote')) {
       grunt.config.set('connect.options.hostname', '0.0.0.0');
     }
@@ -261,7 +218,7 @@ module.exports = function (grunt) {
 
   grunt.registerTask('server', function (target) {
     grunt.log.warn('The `server` task has been deprecated. ' +
-      'Use `grunt serve` to start a server.'
+        'Use `grunt serve` to start a server. Target: ' + target
     );
     // grunt.task.run([target ? ('serve:' + target) : 'serve']);
   });
@@ -281,16 +238,15 @@ module.exports = function (grunt) {
   grunt.registerTask('build', [
     'clean:dist',
     'wiredep',
-    // 'concat',
     'copy:dist',
+    'copy:styles',
+    'coffee',
     'requirejs',
-    // 'clean:requirejs',
-    // 'htmlmin'
+    'bower'
   ]);
 
   grunt.registerTask('default', [
     'newer:jshint',
-    'test',
     'build'
   ]);
 
