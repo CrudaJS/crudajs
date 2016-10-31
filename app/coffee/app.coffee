@@ -1,13 +1,16 @@
 'use strict'
 
 define [
-  'router/router.min', 'ractive', 'conf'
-], (Router, Ractive, conf) ->
+  'router/router.min', 'ractive', 'traverson', 'traverson-hal'
+], (Router, Ractive, Traverson, TraversonHal) ->
 
   init: ->
-    console.log 'Ractive options: ' + Ractive.options + '  ==========>'
     console.log 'Hi world!!'
-    console.log 'Config: ' + conf
+
+    Traverson.registerMediaType(TraversonHal.mediaType, TraversonHal);
+
+    traverson = Traverson.from('http://localhost:8080/profile').jsonHal()
+    console.log traverson
 
     router = new Router()
       .addRoute '#/', () ->
